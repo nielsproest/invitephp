@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: app_db
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+      PGDATA: /var/lib/postgresql/data/pgdata 
+    volumes:
+      - type: bind
+        source: ./pgdata
+        target: /var/lib/postgresql/data
+    networks:
+      - nginx-net
+    ports: # FOR DEBUG
+      - 5432:5432
+
+  web:
+    image: nginx
+    container_name: app_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/var/www/html/static:ro
+    networks:
+      - nginx-net
+    ports:
+      - 8808:80
+    depends_on:
+      - php
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app_php
+    volumes:
+      - ./src:/var/www/html:ro
+    networks:
+      - nginx-net
+    depends_on:
+      - db
+
+networks:
+  nginx-net:
